@@ -1,4 +1,5 @@
 @props([
+    'textsize' => [],
     'bordercolor' => 'border-teal-500',
     'heading' => 'Pendidikan',
     'educations' => [],
@@ -6,13 +7,13 @@
 
 <!-- Education -->
 <div class="space-y-2">
-    <x-cv.heading :heading="$heading" :bordercolor="$bordercolor" />
+    <x-cv.heading :textsize="$textsize" :heading="$heading" :bordercolor="$bordercolor" />
 
     @foreach ($educations as $education)
-        <div class="group">
+        <div class="group" style="font-size: {{ $textsize['base'] }}px;">
             <div class="grow pb-2 group-last:pb-0 space-y-2">
                 <div class="flex items-center justify-between">
-                    <p class="font-semibold">
+                    <p class="font-semibold" style="font-size: {{ $textsize['base_heading'] }}px;">
                         <span class="underline">{{ $education['institution'] }}</span>
                         <span>|</span>
                         <span>{{ $education['major'] }}</span>
@@ -23,7 +24,7 @@
                 </div>
 
                 @if (Arr::has($education, 'description'))
-                    <p class="text-sm text-gray-600">
+                    <p class=text-gray-600">
                         {{ $education['description'] }}
                     </p>
                 @endif
@@ -31,7 +32,7 @@
                 @if (Arr::has($education, 'study_info'))
                     <ul class="list-disc ms-6 space-y-1.5">
                         @foreach ($education['study_info'] as $ngapain)
-                            <li class="ps-1 text-sm text-gray-600">
+                            <li class="ps-1 text-gray-600">
                                 {{ $ngapain }}
                             </li>
                         @endforeach

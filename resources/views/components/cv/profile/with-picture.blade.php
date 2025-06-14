@@ -1,4 +1,5 @@
 @props([
+    'textsize' => [],
     'bordercolor' => 'border-teal-500',
     'picture' => '',
     'name' => '',
@@ -13,14 +14,15 @@
 @use('Carbon\Carbon')
 
 <!-- Profile -->
-<div class="flex gap-5">
-    <img class="object-square size-32 rounded-lg border-2 {{ $bordercolor }}" src="{{ asset($picture) }}" alt="Picture">
+<div class="flex gap-3">
+    <img class="object-square size-25 rounded-lg border-2 {{ $bordercolor }}" src="{{ asset($picture) }}" alt="Picture">
 
-    <div class="flex flex-col gap-2">
-        <p class="font-bold text-2xl">
+    <div class="flex flex-col gap-1">
+        <p class="font-bold" style="font-size: {{ $textsize['name_text'] }}px;">
             {{ $name }}
         </p>
-        <div class="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-sm text-gray-600">
+        <div class="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1 text-gray-600"
+            style="font-size: {{ $textsize['base'] }}px;">
             <p class="text-gray-900">Nomor Telepon</p>
             <p><span>:</span> {{ $phone }}</p>
             <p class="text-gray-900">Email</p>

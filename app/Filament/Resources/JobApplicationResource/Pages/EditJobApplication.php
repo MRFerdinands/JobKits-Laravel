@@ -16,7 +16,7 @@ class EditJobApplication extends EditRecord
     protected function getFormActions(): array
     {
         return [
-            $this->getSaveFormAction(),
+            $this->getSubmitFormAction(),
             $this->getCancelFormAction(),
         ];
     }

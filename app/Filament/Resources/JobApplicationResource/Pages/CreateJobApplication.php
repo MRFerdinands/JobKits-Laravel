@@ -21,7 +21,7 @@ class CreateJobApplication extends CreateRecord
     protected function getFormActions(): array
     {
         return [
-            $this->getSaveFormAction(),
+            $this->getSubmitFormAction(),
             $this->getCancelFormAction(),
         ];
     }

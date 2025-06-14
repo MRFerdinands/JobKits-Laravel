@@ -20,6 +20,20 @@ Route::get('/template-cover-letter', function () {
         ->name('cover-letter.pdf');
 });
 
+Route::get('/template-ktp-pic', function () {
+    return pdf()
+        ->view('templates.ktp-pic')
+        ->margins('25', '25', '25', '25', Unit::Pixel)
+        ->name('cover-letter.pdf');
+});
+
+Route::get('/preview-pdf.pdf', function () {
+    return pdf()
+        ->view('templates.ktp-pic')
+        ->margins('25', '25', '25', '25', Unit::Pixel)
+        ->name('cover-letter.pdf');
+})->name('preview.pdf');
+
 Route::get('/job-applications/view-pdf/{id}', function ($id) {
     $application = JobApplication::find($id);
 

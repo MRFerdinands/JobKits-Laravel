@@ -31,8 +31,10 @@ use Filament\Notifications\Notification;
 use Filament\Tables\Actions\ActionGroup;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\RichEditor;
 use Filament\Tables\Actions\CreateAction;
 use Filament\Tables\Actions\DeleteAction;
+use Filament\Tables\Columns\SelectColumn;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\Wizard\Step;
 use Filament\Forms\Components\ToggleButtons;
@@ -40,6 +42,7 @@ use Filament\Tables\Actions\BulkActionGroup;
 use Filament\Tables\Actions\ReplicateAction;
 use Filament\Forms\Components\MarkdownEditor;
 use Filament\Tables\Actions\DeleteBulkAction;
+use Dotswan\FilamentCodeEditor\Fields\CodeEditor;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\JobApplicationResource\Pages;
 use Saade\FilamentAutograph\Forms\Components\SignaturePad;
@@ -48,13 +51,16 @@ use App\Filament\Resources\JobApplicationResource\RelationManagers;
 use App\Filament\Resources\JobApplicationResource\Pages\EditJobApplication;
 use App\Filament\Resources\JobApplicationResource\Pages\ListJobApplications;
 use App\Filament\Resources\JobApplicationResource\Pages\CreateJobApplication;
-use Filament\Forms\Components\RichEditor;
+use function Spatie\LaravelPdf\Support\pdf;
 
 class JobApplicationResource extends Resource
 {
     protected static ?string $model = JobApplication::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+    protected static ?string $navigationLabel = 'Lamaran Pekerjaan';
+    protected static ?string $modelLabel = 'Lamaran Pekerjaan';
+    protected static ?string $pluralModelLabel = 'Lamaran Pekerjaan';
 
     public static function form(Form $form): Form
     {
@@ -362,7 +368,6 @@ class JobApplicationResource extends Resource
                                             ->required())
                                         ->itemLabel(fn(array $state): ?string => $state['name'] ?? null)
                                         ->addActionLabel('Tambah')
-                                        ->required()
                                         ->collapsible()
                                         ->columnSpanFull(),
                                 ])
@@ -483,38 +488,78 @@ class JobApplicationResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->recordUrl(false)
+            ->recordAction(false)
+            ->defaultSort('created_at', 'desc')
             ->columns([
                 Tables\Columns\TextColumn::make('id')
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('name')
+                    ->label('Perusahaan')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('company_name')
+                    ->label('Perusahaan')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('position')
+                    ->label('Posisi')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('sent_type')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('status')
-                    ->searchable(),
+                TextColumn::make('sent_type')
+                    ->label('Dikirim dengan')
+                    ->badge()
+                    ->formatStateUsing(fn($state) => match ($state) {
+                        'offline' => 'Offline',
+                        'online' => 'Online',
+                    })
+                    ->color(fn(string $state): string => match ($state) {
+                        'offline' => 'info',
+                        'online' => 'warning',
+                    }),
+                TextColumn::make('status')
+                    ->label('Tanggal dibuat')
+                    ->badge()
+                    ->formatStateUsing(fn($state) => match ($state) {
+                        'draft' => 'Draft',
+                        'sent' => 'Dikirim',
+                        'interviewed' => 'Sudah Interview',
+                        'rejected' => 'Ditolak',
+                        'hired' => 'Diterima',
+                    })
+                    ->color(fn(string $state): string => match ($state) {
+                        'draft' => 'gray',
+                        'sent' => 'success',
+                        'interviewed' => 'warning',
+                        'rejected' => 'danger',
+                        'hired' => 'info',
+                    }),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->label('Tanggal dibuat')
+                    ->dateTime('l, d F Y. H:i'),
             ])
             ->filters([
                 //
             ])
             ->actions([
+                MediaAction::make('preview')
+                    ->iconButton()
+                    ->icon('heroicon-o-video-camera')
+                    ->media(fn(JobApplication $record) => route('preview.pdf', ['data' => $record]))
+                    ->modalWidth(MaxWidth::FourExtraLarge)
+                    ->slideOver(),
                 ActionGroup::make([
                     Tables\Actions\EditAction::make(),
+                    // Action::make('change_send_type')
+                    //     ->label('Ubah Dikirim dengan'),
                     Action::make('generate')
                         ->icon('heroicon-o-arrow-down-tray')
                         ->label('Download')
                         ->fillForm(fn(JobApplication $record) => [
                             'filename' => Str::slug($record->name . ' ' . $record->company_name . ' ' . $record->position),
                             'border_color' => 'border-teal-500',
-                            'download_option' => ['cv']
+                            'download_option' => ['cv'],
+                            'text_size' => [
+                                'name_text' => 25,
+                                'heading' => 14,
+                                'base_heading' => 13,
+                                'base' => 12,
+                            ]
                         ])
                         ->form([
                             TextInput::make('filename')
@@ -563,7 +608,35 @@ class JobApplicationResource extends Resource
                                     'cl' => 'Surat Lamaran',
                                     'cv' => 'Daftar Riwayat Hidup',
                                     'doc' => 'Lampiran'
-                                ])
+                                ]),
+                            Group::make([
+                                TextInput::make('text_size.name_text')
+                                    ->label('Ukuran Text Nama')
+                                    ->suffix('Px')
+                                    ->numeric()
+                                    ->default(25)
+                                    ->required(),
+                                TextInput::make('text_size.heading')
+                                    ->label('Ukuran Text Heading')
+                                    ->suffix('Px')
+                                    ->numeric()
+                                    ->default(14)
+                                    ->required(),
+                                TextInput::make('text_size.base_heading')
+                                    ->label('Ukuran Text Base Heading')
+                                    ->suffix('Px')
+                                    ->numeric()
+                                    ->default(13)
+                                    ->required(),
+                                TextInput::make('text_size.base')
+                                    ->label('Ukuran Text Base')
+                                    ->suffix('Px')
+                                    ->numeric()
+                                    ->default(12)
+                                    ->required(),
+                            ])
+                                ->columns(2)
+                                ->columnSpanFull()
                         ])
                         ->action(function (JobApplication $record, array $data) {
                             $filename = $data['filename'] .  '.pdf';
@@ -574,7 +647,7 @@ class JobApplicationResource extends Resource
                                 ->send();
 
                             return response()->streamDownload(function () use ($record, $filename, $data) {
-                                echo base64_decode(Pdf::view('templates.job-aplication', ['data' => $record, 'download_opt' => $data['download_option'], 'border_color' => $data['border_color']])
+                                echo base64_decode(Pdf::view('templates.job-aplication', ['data' => $record, 'download_opt' => $data['download_option'], 'border_color' => $data['border_color'], 'text_size' => $data['text_size']])
                                     ->margins('25', '25', '25', '25', Unit::Pixel)
                                     ->name($filename)
                                     ->base64());
@@ -599,7 +672,6 @@ class JobApplicationResource extends Resource
                             Forms\Components\Textarea::make('company_address')
                                 ->label('Alamat Perusahaan')
                                 ->placeholder('Alamat lengkap perusahaan tujuan')
-                                ->required()
                                 ->rows(2)
                                 ->columnSpanFull(),
 
@@ -632,12 +704,6 @@ class JobApplicationResource extends Resource
                                 ->send();
                         }),
                     DeleteAction::make()
-                ])
-                    ->button(),
-            ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

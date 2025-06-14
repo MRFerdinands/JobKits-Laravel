@@ -1,4 +1,5 @@
 @props([
+    'textsize' => [],
     'bordercolor' => 'border-teal-500',
     'heading' => 'Pengalaman',
     'experiences' => [],
@@ -23,13 +24,13 @@
 
 <!-- Experience -->
 <div class="space-y-2">
-    <x-cv.heading :heading="$heading" :bordercolor="$bordercolor" />
+    <x-cv.heading :textsize="$textsize" :heading="$heading" :bordercolor="$bordercolor" />
 
     @foreach ($experiences as $experience)
-        <div class="group">
+        <div class="group" style="font-size: {{ $textsize['base'] }}px;">
             <div class="grow pb-2 group-last:pb-0 space-y-2">
                 <div class="flex items-center justify-between">
-                    <p class="font-semibold space-x-1">
+                    <p class="font-semibold space-x-1" style="font-size: {{ $textsize['base_heading'] }}px;">
                         <span>{{ $experience['position'] }}</span>
                         <span>|</span>
                         <span class="underline">{{ $experience['company'] }}</span>
@@ -40,7 +41,7 @@
                 </div>
 
                 @if (Arr::has($experience, 'description'))
-                    <p class="text-sm text-gray-600">
+                    <p class=text-gray-600">
                         {{ $experience['description'] }}
                     </p>
                 @endif
@@ -48,7 +49,7 @@
                 @if (Arr::has($experience, 'jobdesk'))
                     <ul class="list-disc ms-6 space-y-1.5">
                         @foreach ($experience['jobdesk'] as $job_desk)
-                            <li class="ps-1 text-sm text-gray-600">
+                            <li class="ps-1 text-gray-600">
                                 {{ $job_desk }}
                             </li>
                         @endforeach

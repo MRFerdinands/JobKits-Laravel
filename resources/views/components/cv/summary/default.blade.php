@@ -1,4 +1,5 @@
 @props([
+    'textsize' => [],
     'bordercolor' => 'border-teal-500',
     'heading' => 'Tentang Saya',
     'summary' => '',
@@ -6,9 +7,9 @@
 
 <!-- Summary -->
 <div class="space-y-2">
-    <x-cv.heading :heading="$heading" :bordercolor="$bordercolor" />
+    <x-cv.heading :textsize="$textsize" :heading="$heading" :bordercolor="$bordercolor" />
 
-    <article class="prose prose-sm !text-sm max-w-none">
+    <article class="prose prose-sm max-w-none" style="font-size: {{ $textsize['base'] }}px;">
         {!! $summary !!}
     </article>
 </div>
